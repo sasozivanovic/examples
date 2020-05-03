@@ -1,0 +1,309 @@
+\ProvidesPackage{examples}
+\RequirePackage{enumitem}
+\RequirePackage{pgfkeys}
+\RequirePackage{pgffor}
+\RequirePackage{etoolbox}
+\RequirePackage{xparse}
+
+\def\newexamples#1#2#3#4{% #1 = environment name, #2 = counter name, #3 = levels, #4 = settings
+  \edef\newexamples@countername{#2}%
+  \csedef{examples@countername@#1}{#2}%
+  \ifcsdef{examples@dp@#2}{}{\csdef{examples@dp@#2}{0}}%
+  \ifcsdef{enit@resume@series@#2}{}{%
+    \csxappto{enit@resume@series@#2}{\expandonce{\csname c@#1i\endcsname}0\relax}%
+  }%
+  \csappto{examples@DP@#2}{%
+   \csname enitdp@#1\expandafter\endcsname
+   \csname examples@dp@#2\endcsname\relax
+  }%
+  \newexamples@inlinefalse
+  \pgfqkeys{/newexamples}{#4}%
+  \newlist{#1}{enumerate\ifnewexamples@inline*\fi}{#3}%
+  \gdef\newexamples@global@marshal{}
+  \foreach \newexamples@level in {1,...,#3} {%
+    \xappto\newexamples@global@marshal{\noexpand\newexamples@setlist{#1}{\newexamples@level}{\ifnewexamples@inline inline\else normal\fi}}%
+  }\newexamples@global@marshal
+  \gdef\newexamples@global@marshal{all/.code={}}
+  \foreach \newexamples@level in {1,...,#3} {%
+    \xappto\newexamples@global@marshal{,\newexamples@level/.code={}}%
+  }%
+  \edef\newexamples@marshal{%
+    \noexpand\pgfqkeys{/newexamples}{\expandonce{\newexamples@global@marshal}}%
+  }\newexamples@marshal
+}
+\def\newexamples@setlist#1#2#3{% #1 = environment name, #2 = level, #3 = normal/inline
+  \def\newexamples@environment{#1}% 
+  \def\newexamples@level{#2}% 
+  \def\newexamples@enumitemkeys{}%
+  \pgfqkeys{/newexamples}{
+    defaults/.try,
+    #3 defaults/.try,
+    defaults/#2/.try,
+    #3 defaults/#2/.try,
+    all/.try,
+    #2/.try
+  }%
+  \pgfkeysgetvalue{/newexamples/before}\newexamples@before
+  \pgfkeysgetvalue{/newexamples/after}\newexamples@after
+  \edef\newexamples@marshal{%
+    \noexpand\setlist*[#1,#2]{%
+      \expandonce{\newexamples@enumitemkeys},
+      before={\expandonce{\newexamples@before}},
+      after={\expandonce{\newexamples@after}},
+    }%
+  }\newexamples@marshal
+}
+
+\def\newexamples@sync@depth#1#2{% #1 = triggering environment, #2 = counter
+  \csedef{examples@dp@#2}{\the\csname enitdp@#1\endcsname}%
+  \csedef{#2\@roman\csname enitdp@#2\endcsname}{#1\@roman\csname enitdp@#2\endcsname}%
+  \csname examples@DP@#2\endcsname
+  \csname c@#2\@roman\csname enitdp@#1\endcsname\expandafter\endcsname
+    \csname c@#1\@roman\csname enitdp@#1\endcsname\endcsname
+}
+
+\def\newexamples@sync@outercounter#1#2{% #1 = environment, #2 = series
+  \setcounter{#1i}{%
+    \expandafter\expandafter\expandafter\@gobble
+      \csname enit@resume@series@#2\endcsname\relax
+  }%
+}
+
+\def\newexamples@redefine@item#1#2{%
+  \ifcsmacro{examples@item@#1@#2}{%
+    \letcs\item{examples@item@#1@#2}%
+  }{}%
+}
+
+\newif\ifnewexamples@inline
+\pgfqkeys{/newexamples}{
+  inline/.is if=newexamples@inline,
+  before/.initial={},
+  after/.initial={},
+  .unknown/.code={%
+    \eappto\newexamples@enumitemkeys{%
+      ,\pgfkeyscurrentname={\unexpanded{#1}}%
+    }%
+  },
+}
+
+% todo: also minipage
+\newif\ifexamples@infootnote
+\def\FootnoteExamples#1{%
+  \ifdef\examples@original@footnotetext{}{%
+    \let\examples@original@footnotetext\@footnotetext
+    \long\def\@footnotetext##1{%
+      \begingroup
+      \examples@infootnotetrue
+      \examples@footnote@init
+      \examples@original@footnotetext{##1}%
+      \endgroup
+    }%
+  }%
+  \def\examples@footnote@init{}%
+  \pgfqkeys{/examples/footnote}{#1}%
+}
+\pgfqkeys{/examples/footnote}{
+  .unknown/.code={%
+    \let\examples@fnenvironment\pgfkeyscurrentname
+    \letcs\examples@fncounter{examples@countername@\examples@fnenvironment}%
+    \eappto\examples@footnote@init{%
+      \noexpand\gdef\expandonce{\csname enit@resume@series@\examples@fncounter\endcsname}{%
+        \expandonce{\csname c@\examples@fnenvironment i\endcsname}0\relax
+      }%
+    }%
+    \def\examples@toreplace{#1}%
+    \unless\ifx\examples@toreplace\pgfkeysnovalue@text
+      \eappto\examples@footnote@init{%
+        \let
+        \expandonce{\csname\examples@toreplace\endcsname}%
+        \expandonce{\csname\examples@fnenvironment\endcsname}%
+        \let
+        \expandonce{\csname end\examples@toreplace\endcsname}%
+        \expandonce{\csname end\examples@fnenvironment\endcsname}%
+      }%
+    \fi
+  },
+}
+
+% defaults:
+\pgfqkeys{/newexamples}{
+  defaults/.style={
+    before/.expanded={%
+      \def\noexpand\newexamples@countername{\newexamples@countername}%
+      \noexpand\newexamples@sync@depth{\newexamples@environment}{\newexamples@countername}%
+      \noexpand\newexamples@redefine@item{\newexamples@environment}{\newexamples@level}%
+    },
+  },
+  normal defaults/.style={
+    topsep/.expanded=\the\itemsep,
+    partopsep=0pt,
+    parsep=0pt,
+    itemsep=3.0pt plus 1.0pt minus 2.0pt,
+    align=left,labelindent=0pt,labelsep=0.7em,itemindent=0pt,leftmargin=*,
+  },
+  inline defaults/.style={
+    itemjoin={,\space},
+  },  
+  defaults/1/.style={
+    resume/.expanded=\newexamples@countername,
+    before/.append/.expanded={%
+      \noexpand\newexamples@sync@outercounter{\newexamples@environment}{\newexamples@countername}%
+    },
+    label={(\arabic*)},
+  },
+  normal defaults/1/.style={
+    widest=99,
+    topsep/.expanded=\the\topsep,
+    partopsep/.expanded=\the\partopsep,
+    parsep/.expanded=\the\parsep,
+    itemsep/.expanded=\the\itemsep,
+  },
+  inline defaults/1/.style={
+    itemjoin=\quad,
+  },  
+  defaults/2/.style={
+    label={\alph*.},
+    ref/.expanded=({\noexpand\arabic{\newexamples@countername i}}{\noexpand\alph*}),
+  },
+  normal defaults/2/.style={
+    widest=b,
+    midpenalty=200,
+  },  
+  inline defaults/2/.style={
+    itemjoin=\quad,
+  },  
+  defaults/3/.style={
+    label={\roman*.},
+    ref/.expanded=({\noexpand\arabic{\noexpand\newexamples@countername i}}{\noexpand\alph{\noexpand\newexamples@countername ii}}{\noexpand\roman*}),
+  },
+  normal defaults/3/.style={
+    widest=iii,
+    midpenalty=300,
+  },
+  defaults/4/.style={
+    label={\Alph*.},
+    ref/.expanded=({\noexpand\arabic{\noexpand\newexamples@countername i}}{\noexpand\alph{\noexpand\newexamples@countername ii}}{\noexpand\roman{\noexpand\newexamples@countername iii}}{\noexpand\Alph*}),
+  },
+  normal defaults/4/.style={
+    widest=A,
+    midpenalty=400,
+  },
+  defaults/5/.style={
+    label={\Roman*.},
+    ref/.expanded=({\noexpand\arabic{\noexpand\newexamples@countername i}}{\noexpand\alph{\noexpand\newexamples@countername ii}}{\noexpand\roman{\noexpand\newexamples@countername iii}}{\noexpand\Alph{\noexpand\newexamples@countername iiii}}{\noexpand\Roman*}),
+  },
+  normal defaults/5/.style={
+    widest=III,
+  },
+}
+
+
+\def\newexamples@sync@counter{%
+  \edef\newexamples@temp{%
+    \csname examples@countername@\@currenvir\endcsname
+    \@roman\csname examples@dp@\csname examples@countername@\@currenvir\endcsname\endcsname
+  }%
+  \unless\ifx\newexamples@temp\@enumctr
+    \csname c@\newexamples@temp\expandafter\endcsname
+    \csname c@\@enumctr\endcsname
+    \advance\csname c@\newexamples@temp\expandafter\endcsname 1
+  \fi
+}
+
+\RequirePackage{fancyitem}
+\newcommand\judgmentitem[1][]{%
+  \def\judgmentitem@judgment{}%
+  \let\judgmentitem@label\relax
+  \def\judgmentitem@note{}%
+  \pgfqkeys{/judgmentitem}{#1}%
+  \ifexamples@infootnote\else\newexamples@sync@counter\fi
+  \ifx\judgmentitem@label\relax
+    \expandafter\PlainItem
+  \else
+    \expandafter\expandafter\expandafter\PlainItem\expandafter\expandafter\expandafter[\expandafter\judgmentitem@label\expandafter]%
+  \fi
+  \ifdefempty\judgmentitem@judgment{}{%
+    \expandafter\judgmentitemMakeJudgment\expandafter{\judgmentitem@judgment}%
+  }%
+  \ifdefempty\judgmentitem@note{}{%
+    \expandafter\AtEndItem\expandafter{\expandafter\judgmentitemMakeNote\expandafter{\judgmentitem@note}}%
+  }%
+}
+\pgfqkeys{/judgmentitem}{
+  judgment/.store in=\judgmentitem@judgment,
+  */.style={judgment=*},
+  ?/.style={judgment=?},
+  ??/.style={judgment=\scriptsize ??},
+  %??/.style={judgment=??},
+  hash/.style={judgment=\raise 0.3ex \hbox{\scriptsize\#}\hskip -0.05em},
+  label/.store in=\judgmentitem@label,
+  note/.store in=\judgmentitem@note,
+}
+\def\judgmentitemMakeJudgment#1{%
+  \hskip -0.05em
+  \makebox[0pt][r]{\small#1}%
+  \hskip 0.05em
+}
+\def\judgmentitemMakeNote#1{\pushright{(#1)}}
+
+\NewDocumentCommand\mathitem{
+  s % * switches to text mode
+  O{} % justification
+  o % label
+}{%
+  \newexamples@sync@counter
+  \IfBooleanTF{#1}{%
+    \notblank{#2}{%
+      \AtEndItem{\note{#2}}%
+      \IfValueTF{#3}{\PlainItem[#3]}{\PlainItem}%
+      \ignorespaces
+    }{%
+      \IfValueTF{#3}{\PlainItem[#3]}{\PlainItem}%
+    }%
+  }{%
+    \notblank{#2}{\AtEndItem{$%$
+        \note{#2}}}{\AtEndItem{$%$
+      }}%
+    \IfValueTF{#3}{\PlainItem[#3]}{\PlainItem}%
+    $%$
+  }%
+}
+
+% fix: če dam tule na 1, je problem pri nested {example} (v maintextu)
+\newexamples{footnoteexamples}{footnoteexamples}{2}{
+  all/.style={
+    align=left,
+    labelindent=0pt,labelsep=0.5em,itemindent=0pt,leftmargin=*,
+    topsep=0pt,itemsep=0pt,
+  },
+  1/.style={
+    label={(\roman*)},
+    widest=iii,
+  },
+  2/.style={
+    widest=a,
+  },
+}
+
+\global\let\examples\relax
+\global\let\endexamples\relax
+\newexamples{examples}{examples}{4}{}
+\newexamples{examples*}{examples}{4}{inline}
+\FootnoteExamples{footnoteexamples=examples}
+\FancyItem{examples}{\judgmentitem}
+\FancyItem{examples*}{\judgmentitem}
+
+% \newcommand\manualexample{%
+%   \addtocounter{}%  
+% }
+
+% todo: starting number (for DDS deductions to start with 0)
+
+% todo: prefix, suffix, affix, prime, prime of
+
+%%% Local Variables: %%%
+%%% TeX-master: "test2" %%%
+%%% version-control: t %%%
+%%% End: %%%
+

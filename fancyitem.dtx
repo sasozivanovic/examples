@@ -1,0 +1,184 @@
+% \iffalse meta-comment
+% fancyitem.dtx
+%% `fancyitem' is a package for XXX
+%%
+%% Copyright (c) 2020 Saso Zivanovic
+%%                    (Sa\v{s}o \v{Z}ivanovi\'{c})
+%% saso.zivanovic@guest.arnes.si
+%%
+%% This work may be distributed and/or modified under the
+%% conditions of the LaTeX Project Public License, either version 1.3
+%% of this license or (at your option) any later version.
+%% The latest version of this license is in
+%% 
+%%   http://www.latex-project.org/lppl.txt
+%%   
+%% and version 1.3 or later is part of all distributions of LaTeX
+%% version 2005/12/01 or later.
+%%
+%% This work has the LPPL maintenance status `author-maintained'.
+%% 
+%% This work consists of the following files:
+%% - fancyitem.dtx:
+%% - fancyitem.sty:
+%% 
+%<*driver>
+\input{fancyitem-doc}
+%</driver>
+% \fi
+% 
+% \section{Implementation}
+% \label{sec:fancyitem:implementation}
+%
+% Package identification and dependencies.
+%    \begin{macrocode}
+\ProvidesPackage{fancyitem}
+\RequirePackage{etoolbox}
+%    \end{macrocode}
+% 
+%
+% \subsection{Auxiliary definitions}
+% \label{sec:fancyitem:aux}
+% 
+% The user-defined \emph{item macros} are accessed via control sequences which
+% |\fancyitem@itemcs| expands to.  The two parameters are the environment name
+% (|#1|) and the environment depth (|#2|).  The depth of 0 is a fallback for
+% unregistered depths, see |\FancyItem| below.
+%    \begin{macrocode}
+\def\fancyitem@itemcs#1#2{fancyitem@item@#1@#2}
+%    \end{macrocode}
+% 
+% The following macro expands to the control sequence of the \emph{end-of-item
+% token list} associated to the current environment at the current depth.
+%    \begin{macrocode}
+\def\fancyitem@endcurritemcs{fancyitem@end@\@currenvir @\fancyitem@dp}
+%    \end{macrocode}
+% 
+% This package is normally meant to be used alongside package |enumitem|, so
+% the depth of a list environment is retrieved from |enumitem|'s internal depth
+% counters |enitdp@|\meta{environment name}.
+%    \begin{macrocode}
+\def\fancyitem@dp{%
+  \ifcsdef{enitdp@\@currenvir}{%
+    \expandafter\the\csname enitdp@\@currenvir\endcsname
+  }{}%
+}
+%    \end{macrocode}
+% 
+% In the absence of |enumitem|, we provide its alternative names of standard
+% \LaTeX\ counters |\@itemdepth| and |\@enumdepth| ourselves.\footnote{If
+% |enumitem| is loaded with option |loadonly|, the alternative names are not
+% defined and we don't provide them either, assuming that the user knows what
+% she is doing.}
+%    \begin{macrocode}
+\@ifpackageloaded{enumitem}{}{%
+  \let\enitdp@itemize\@itemdepth
+  \let\enitdp@enumerate\@enumdepth
+}
+%    \end{macrocode}
+%
+% \subsection{The core}
+% \label{sec:fancyitem:core}
+% 
+% This is our redefinition of standard |\item|.  If the current environment has
+% an associated item macro at the current depth, we use it: we first insert the
+% end-of-item token list into the stream, and then execute the user-defined
+% macro.  Otherwise, we try to use the fallback item macro for the current
+% environment (the ``depth'' 0).  If this fails as well, we fall back to the
+% standard \LaTeX\ item (saved in |\PlainItem|).
+%    \begin{macrocode}     
+\def\fancyitem@item{%
+  \ifcsdef{\fancyitem@itemcs{\@currenvir}{\fancyitem@dp}}{%
+    \fancyitem@doatenditem
+    \@nameuse{\fancyitem@itemcs{\@currenvir}{\fancyitem@dp}}%
+  }{%
+    \ifcsdef{\fancyitem@itemcs{\@currenvir}{0}}{%
+      \fancyitem@doatenditem
+      \@nameuse{\fancyitem@itemcs{\@currenvir}{0}}%
+    }{%      
+      \PlainItem
+    }%
+  }%
+}
+%    \end{macrocode}
+% 
+% If the end-of-item token list for the current environment at the current
+% depth exists, insert it into the stream and then clear it.
+%    \begin{macrocode}
+\def\fancyitem@doatenditem{%
+  \ifcsdef{\fancyitem@endcurritemcs}{\fancyitem@doatenditem@}{}}
+\def\fancyitem@doatenditem@{%
+  \expandafter\the\csname\fancyitem@endcurritemcs\endcsname
+  \csname\fancyitem@endcurritemcs\endcsname={}%
+}
+%    \end{macrocode}
+% 
+% \subsection{User interface}
+% \label{sec:fancyitem:ui}
+% 
+% \macro{\FancyItem}This macro registers a user-defined item macro (|#3|) for a
+% given environment (|#2|) at a given depth (the optional argument |#1|).  If
+% the depth is 0 (or omitted), the given item macro will be used as a fallback
+% item macro for this environment.
+% 
+% Note that the user-defined item macro should in principle call the standard
+% \LaTeX\ |\item|, now stored in |\PlainItem|.  The item macro may call
+% |\AtEndItem|; its argument will be executed at the end of the item.
+%    \begin{macrocode}
+\newcommand\FancyItem[3][0]{%
+%    \end{macrocode}
+% Associate the environment--depth dependent control sequence to the given item
+% macro.
+%    \begin{macrocode}
+  \cslet{\fancyitem@itemcs{#2}{#1}}{#3}%
+%    \end{macrocode}
+% 
+% The end-of-item hook for the final item in a list requires special attention.
+% While the modified |\item| command inserts the end-of-item token list for
+% non-final items, this insertion must be performed by the end of environment
+% for the final item.  We use |etoolbox|'s |\AtEndEnvironment| to call
+% |\fancyitem@doatenditem| at the end of every registered environment.
+% 
+% Given that every depth of an environment can have its own item macro,
+% |\FancyItem| can be called several times for the same environment.  But
+% calling |\fancyitem@doatenditem| once at the end of an environment suffices,
+% as this macro deals with depth internally.  Before blindly appending it to
+% the end-of-environment hook, we therefore check if it is already there.  We
+% do this using |\ifpatchable|.  The test is not bullet-proof, but it should
+% suffice.  The test furthermore relies on the internals of |etoolbox| (that
+% the end-of-environment hook is stored in |@end@#2@hook|), but the worse that
+% can happen if something goes wrong is that |\fancyitem@doatenditem| will get
+% executed several times at the end of an environment, which is harmless, as
+% the end-of-item token list is cleared after usage.
+%    \begin{macrocode}
+\expandafter\ifpatchable\expandafter
+  {\csname @end@#2@hook\endcsname}{\fancyitem@doatenditem}{}{%
+    \AtEndEnvironment{#2}{\fancyitem@doatenditem}%
+  }%
+}
+%    \end{macrocode}
+% 
+% \macro{\AtEndItem}This macro will usually be called within the item macro, to
+% defer some code until the end of item.  After ensuring that the end-of-item
+% token list for the current environment at the current depth actually exists
+% (if not, it is created), the macro stores the given code into the token list.
+%    \begin{macrocode}
+\def\AtEndItem#1{%
+  \ifcsdef{\fancyitem@endcurritemcs}{}{%
+    \expandafter\newtoks\csname\fancyitem@endcurritemcs\endcsname
+  }%
+  \csname\fancyitem@endcurritemcs\endcsname={#1}%
+}
+%    \end{macrocode}
+% 
+% \macro{\PlainItem}Redefine the standard \LaTeX\ |\item|, saving the original
+% into |\PlainItem|, so that it can be called by user-defined item macros.
+%    \begin{macrocode}
+\let\PlainItem\item
+\let\item\fancyitem@item      
+%    \end{macrocode}
+% \endinput
+% Local Variables:
+% mode: doctex
+% TeX-master: t
+% End:

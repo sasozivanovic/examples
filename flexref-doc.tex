@@ -1,0 +1,53 @@
+\documentclass[a4paper]{ltxdoc}
+\usepackage{doc-preamble}
+
+% \usepackage{fancyitem}
+\usepackage{examples}
+\usepackage{flexref}
+
+\author{Sašo Živanović\footnote{%
+    e-mail: \href{mailto:saso.zivanovic@guest.arnes.si}{saso.zivanovic@guest.arnes.si};
+    web: \href{http://spj.ff.uni-lj.si/zivanovic/}{http://spj.ff.uni-lj.si/zivanovic/}}}
+\title{flexref}
+
+\begin{document}
+
+\maketitle
+
+\begin{abstract}
+  This package allows the author to extract parts of the cross-reference.
+\end{abstract}
+
+In the example below, we define to extraction macros:
+\begin{itemize}
+\item |\plainref| strips off the parentheses.  (We're using the |examples|
+    package here, which automatically wraps the example number in parentheses.)
+\item |\iref| is meant to be applied to second-level examples.  It strips off
+  the parenthesis and the outer example number.
+\end{itemize}
+
+\begin{tcblisting}{example}
+  \flexrefdef\plainref(#1){#1}
+  \flexrefdef\iref(#1#2){#2}
+  \begin{examples}
+  \item A list of stuff:
+    \begin{examples}
+    \item\label{ex:farmer} a farmer owning a donkey in (\iref{ex:donkey}).
+    \item\label{ex:donkey} a donkey owned by a farmer in (\iref{ex:farmer}).
+    \end{examples}
+  \end{examples}
+  The important stuff: \ref{ex:farmer}--\ref{ex:donkey}.  Or do you prefer
+  (\plainref{ex:farmer}--\iref{ex:donkey})?
+\end{tcblisting}
+
+There are no predefined extraction macros.  The authors must define their own.
+
+The package works whether |hyperref| is loaded or not.  But the extraction
+does not create a hyperlink --- yet.
+
+\end{document}
+
+%%% Local Variables:
+%%% mode: latex
+%%% TeX-master: t
+%%% End:

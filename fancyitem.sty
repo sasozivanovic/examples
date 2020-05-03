@@ -1,0 +1,80 @@
+%%
+%% This is file `fancyitem.sty',
+%% generated with the docstrip utility.
+%%
+%% The original source files were:
+%%
+%% fancyitem.dtx 
+%% 
+%% `fancyitem' is a package for XXX
+%%
+%% Copyright (c) 2020 Saso Zivanovic
+%%                    (Sa\v{s}o \v{Z}ivanovi\'{c})
+%% saso.zivanovic@guest.arnes.si
+%%
+%% This work may be distributed and/or modified under the
+%% conditions of the LaTeX Project Public License, either version 1.3
+%% of this license or (at your option) any later version.
+%% The latest version of this license is in
+%%
+%%   http://www.latex-project.org/lppl.txt
+%%
+%% and version 1.3 or later is part of all distributions of LaTeX
+%% version 2005/12/01 or later.
+%%
+%% This work has the LPPL maintenance status `author-maintained'.
+%%
+%% This work consists of the following files:
+%% - fancyitem.dtx:
+%% - fancyitem.sty:
+%%
+\ProvidesPackage{fancyitem}
+\RequirePackage{etoolbox}
+\def\fancyitem@itemcs#1#2{fancyitem@item@#1@#2}
+\def\fancyitem@endcurritemcs{fancyitem@end@\@currenvir @\fancyitem@dp}
+\def\fancyitem@dp{%
+  \ifcsdef{enitdp@\@currenvir}{%
+    \expandafter\the\csname enitdp@\@currenvir\endcsname
+  }{}%
+}
+\@ifpackageloaded{enumitem}{}{%
+  \let\enitdp@itemize\@itemdepth
+  \let\enitdp@enumerate\@enumdepth
+}
+\def\fancyitem@item{%
+  \ifcsdef{\fancyitem@itemcs{\@currenvir}{\fancyitem@dp}}{%
+    \fancyitem@doatenditem
+    \@nameuse{\fancyitem@itemcs{\@currenvir}{\fancyitem@dp}}%
+  }{%
+    \ifcsdef{\fancyitem@itemcs{\@currenvir}{0}}{%
+      \fancyitem@doatenditem
+      \@nameuse{\fancyitem@itemcs{\@currenvir}{0}}%
+    }{%
+      \PlainItem
+    }%
+  }%
+}
+\def\fancyitem@doatenditem{%
+  \ifcsdef{\fancyitem@endcurritemcs}{\fancyitem@doatenditem@}{}}
+\def\fancyitem@doatenditem@{%
+  \expandafter\the\csname\fancyitem@endcurritemcs\endcsname
+  \csname\fancyitem@endcurritemcs\endcsname={}%
+}
+\newcommand\FancyItem[3][0]{%
+  \cslet{\fancyitem@itemcs{#2}{#1}}{#3}%
+\expandafter\ifpatchable\expandafter
+  {\csname @end@#2@hook\endcsname}{\fancyitem@doatenditem}{}{%
+    \AtEndEnvironment{#2}{\fancyitem@doatenditem}%
+  }%
+}
+\def\AtEndItem#1{%
+  \ifcsdef{\fancyitem@endcurritemcs}{}{%
+    \expandafter\newtoks\csname\fancyitem@endcurritemcs\endcsname
+  }%
+  \csname\fancyitem@endcurritemcs\endcsname={#1}%
+}
+\let\PlainItem\item
+\let\item\fancyitem@item
+\endinput
+%%
+%% End of file `fancyitem.sty'.

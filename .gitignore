@@ -1,0 +1,4 @@
+_region_*
+*.out
+*.listing
+test*

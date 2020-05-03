@@ -1,0 +1,59 @@
+\ProvidesPackage{flexref}
+\RequirePackage{etoolbox}
+
+\@ifpackageloaded{hyperref}{%
+  \long\def\@firstoffive#1#2#3#4#5{#1}%
+  \let\flexref@firstofsome\@firstoffive
+}{%
+  \let\flexref@firstofsome\@firstoftwo
+}
+
+\def\flexref@END{\flexref@END}
+\def\flexrefdef#1#2#{%
+  \def#1##1{%
+    \ifcsmacro{r@##1}{%
+      \csname\string#1%
+        \expandafter\expandafter\expandafter\expandafter\expandafter\expandafter\expandafter\expandafter\expandafter\expandafter\expandafter\expandafter\expandafter\expandafter\expandafter\expandafter\expandafter\expandafter\expandafter\expandafter\expandafter\expandafter\expandafter\expandafter\expandafter\expandafter\expandafter\expandafter\expandafter\expandafter\expandafter\expandafter
+        \expandafter\expandafter\expandafter\expandafter\expandafter\expandafter\expandafter\expandafter\expandafter\expandafter\expandafter\expandafter\expandafter\expandafter\expandafter\expandafter
+        \expandafter\expandafter\expandafter\expandafter\expandafter\expandafter\expandafter\expandafter
+        \expandafter\expandafter\expandafter\expandafter
+        \expandafter\expandafter
+        \expandafter
+      \endcsname
+        \expandafter\expandafter\expandafter\expandafter\expandafter\expandafter\expandafter\expandafter\expandafter\expandafter\expandafter\expandafter\expandafter\expandafter\expandafter\expandafter
+        \expandafter\expandafter\expandafter\expandafter\expandafter\expandafter\expandafter\expandafter
+        \expandafter\expandafter\expandafter\expandafter
+        \expandafter\expandafter
+        \expandafter
+          \@firstofone % expansion 5
+          \expandafter\expandafter\expandafter\expandafter\expandafter\expandafter\expandafter\expandafter
+          \expandafter\expandafter\expandafter\expandafter
+          \expandafter\expandafter
+          \expandafter
+          \@firstofone % expansion 4
+            \expandafter\expandafter\expandafter\expandafter
+            \expandafter\expandafter
+            \expandafter
+              \flexref@firstofsome % expansion 3
+              \csname r@##1\endcsname % expansions 1 and 2
+                \flexref@END 
+    }{%
+      \textbf{\detokenize{##1}??}%
+    }%
+  }%
+  \csdef{\string#1}#2\flexref@END
+}
+
+% Examples:
+% 
+% Strip parenthesis:
+% \flexrefdef\npref(#1){#1}
+% 
+% 
+
+
+%%% Local Variables: %%%
+%%% TeX-master: "test-flexref" %%%
+%%% version-control: t %%%
+%%% End: %%%
+

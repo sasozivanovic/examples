@@ -1,0 +1,133 @@
+\documentclass[a4paper]{ltxdoc}
+\usepackage{doc-preamble}
+
+\usepackage{xparse}
+\usepackage[shortlabels]{enumitem}
+\usepackage{fancyitem}
+% \usepackage{examples2}
+
+\author{Sašo Živanović\footnote{%
+    e-mail: \href{mailto:saso.zivanovic@guest.arnes.si}{saso.zivanovic@guest.arnes.si};
+    web: \href{http://spj.ff.uni-lj.si/zivanovic/}{http://spj.ff.uni-lj.si/zivanovic/}}}
+\title{fancyitem}
+
+\begin{document}
+
+\maketitle
+
+\begin{abstract}
+  This package allows the user to redefine the stock |\item|.  It also provides
+  an end-of-item hook.
+\end{abstract}
+
+\section{Introduction}
+\label{sec:introduction}
+
+The idea of the package is that some specialized environments might be better
+off with a specialized |\item| command.  For example, within an environment for
+linguistic examples, it might be handy to have an |\item| which makes the
+judgment mark stick out of the example,
+% starts glossing,
+and pushes the (parenthesized) language identifier to the right.  Like this:
+
+\begin{tcblisting}{example}
+  \NewDocumentCommand\LinguisticItem{d()s}{%           % in the preamble
+    \IfValueT{#1}{\AtEndItem{\hfill(#1)}}%
+    \PlainItem
+    \IfBooleanT{#2}{\mbox{}\llap{*}}%
+    \ignorespaces
+  }
+  \FancyItem[1]{enumerate}{\LinguisticItem}
+  \begin{enumerate}[(1),labelsep=1em]                  % in the document
+  \item(English) This sentence is grammatical.
+  \item(English)* This sentence ungrammatical is.
+  \end{enumerate}
+\end{tcblisting}
+
+Or perhaps, a listing environment which automatically enables math mode?
+
+\begin{tcblisting}{example}
+  \newcommand\MathItem{%                               % in the preamble
+    \AtEndItem{$}%
+    \PlainItem$%
+  }
+  \FancyItem[1]{itemize}{\MathItem}
+  \begin{itemize}                                      % in the document
+  \item (a+1)^2=a^2+2a+1
+  \item \exists x\colon Ax\wedge Bx
+  \end{itemize}
+\end{tcblisting}
+
+Sky is the limit once you have control over your |\item|.
+
+
+\section{Usage}
+\label{sec:usage}
+
+% todo: depth 0
+
+Load the package:
+
+\begin{tcblisting}{example,listing only}
+  \usepackage{fancyitem}
+\end{tcblisting}
+
+Define an \emph{item macro} (or several) in any way you like, naming it as you
+wish:
+
+\begin{tcblisting}{example,listing only}
+  \def\myitem{\PlainItem\cmd{\myitem}: }                                    % TeX
+  \newcommand\myitemcommand{\PlainItem\cmd{\myitemcommand}: }               % LaTeX
+  \NewDocumentCommand\MyItemCommand{}{\PlainItem\cmd{\MyItemCommand}: }     % LaTeX3
+\end{tcblisting}
+
+Associate the item macro to an environment at a certain depth:
+
+\begin{tcblisting}{example,listing only}
+  \FancyItem[1]{itemize}{\myitem}
+  \FancyItem[1]{enumerate}{\myitemcommand}
+  \FancyItem[2]{enumerate}{\MyItemCommand}
+\end{tcblisting}
+
+Make a list! 
+
+\def\myitem{\PlainItem\cmd{\myitem}: }                                    % TeX
+\newcommand\myitemcommand{\PlainItem\cmd{\myitemcommand}: }               % LaTeX
+\NewDocumentCommand\MyItemCommand{}{\PlainItem\cmd{\MyItemCommand}: }     % LaTeX3
+\FancyItem[1]{itemize}{\myitem}
+\FancyItem[1]{enumerate}{\myitemcommand}
+\FancyItem[2]{enumerate}{\MyItemCommand}
+
+\begin{tcblisting}{example}
+  \begin{enumerate}
+  \item enumerated list at depth one
+  \item again
+    \begin{itemize}
+    \item first-level itemize
+    \item again
+    \end{itemize}
+  \item 
+    \begin{enumerate}
+    \item enumerate at depth two
+    \item again
+    \end{enumerate}
+  \end{enumerate} 
+\end{tcblisting}
+
+As a special treat, the package provides a hook into the end of an item.  The
+hook is set up by |\AtEndItem|.  It makes most sense within an item macro, like
+this:
+
+\begin{tcblisting}{example}
+\end{tcblisting}
+
+
+\DocInput{fancyitem.dtx}
+
+\end{document}
+
+
+%%% Local Variables:
+%%% mode: latex
+%%% TeX-master: "fancyitem.dtx"
+%%% End:

@@ -1,0 +1,123 @@
+\documentclass[a4paper]{ltxdoc}
+\usepackage{doc-preamble}
+
+% \usepackage{fancyitem}
+\usepackage{examples}
+\usepackage{fancyitem}
+
+\author{Sašo Živanović\footnote{%
+    e-mail: \href{mailto:saso.zivanovic@guest.arnes.si}{saso.zivanovic@guest.arnes.si};
+    web: \href{http://spj.ff.uni-lj.si/zivanovic/}{http://spj.ff.uni-lj.si/zivanovic/}}}
+\title{examples}
+
+\begin{document}
+
+\maketitle
+
+\begin{abstract}
+  Yet another package for typesetting linguistic examples.
+\end{abstract}
+
+This package is work in progress. Anything may change without prior notice.
+
+\section{Desiderata}
+
+\newcommand\done{Checkedbox}
+\begin{enumerate}[label=\todobox]
+\item[\donebox] Introduce examples by |\item|.
+\item[\donebox] Use the same environment all levels of examples, and also in footnotes
+  --- moving an example around should not require changing the environment.
+\item[\donebox] Base the package on the |enumitem| package.
+\item[\donebox] Users can define their own example environments.  Environments can share
+  the counter.
+\item[\donebox] Inline examples, which can share the counter with displayed examples.
+\item Manual examples.
+\end{enumerate}
+
+\section{Examples of examples}
+
+\begin{tcblisting}{example}
+  \begin{examples}
+  \item Featuring:
+    \begin{examples}
+    \item individuals:
+      \begin{examples*}
+      \item farmers
+      \item donkeys
+      \end{examples*}
+    \item events:
+      \begin{examples*}
+      \item owning
+      \item beating
+      \end{examples*}
+    \end{examples}
+  \item Every farmer who owns a donkey beats it.
+    \begin{examples}
+    \item For every pair of a farmer $x$ and a donkey $y$, $x$ beats $y$.
+    \item For every farmer $x$ who owns a donkey, there is a donkey $y$ such
+      that $x$ beats $y$.
+    \end{examples}
+  \end{examples}
+  A bit of text.
+  \begin{examples*}[itemjoin=\space]
+  \item And
+  \item some
+  \item more,
+  \item very
+  \item short
+  \item inline
+  \item examples
+  \end{examples*}.
+\end{tcblisting}
+
+\newpage
+
+Examples can be produced in footnotes using the same code, like
+this.\footnote{Sorry, donkeys, I know you would prefer to be fed, as in
+  \ref{ex:donkey:feed}.
+  \begin{examples}
+  \item\label{ex:donkey:feed} Every farmer who owns a donkey feeds it.
+  \end{examples}
+} But footnote examples don't yet work in the |tcblisting| environment used to
+produce the lovely boxes --- footnote~\ref{fn:apology} containing example
+\ref{ex:donkey:feed} was typeset by this code:\footnote{There's further
+  footnote-related stuff that doesn't work properly.
+  \begin{examples*}
+  \item There's too much space above this footnote.
+  \item The reference to footnotes doesn't work.
+  \item The examples you are reading right now should be numbered by roman
+    numerals, and not interfere with the numbering in the text.
+  \end{examples*}
+}
+
+\begin{tcblisting}{example,listing only}
+  Examples can be produced in footnotes using the same code, like
+  this.\footnote{\label{fn:apology}Sorry, donkeys, I know you would prefer to be fed, as in
+    \ref{ex:donkey:feed}.
+    \begin{examples}
+    \item\label{ex:donkey:feed} Every farmer who owns a donkey feeds it.
+    \end{examples}
+  }
+\end{tcblisting}
+
+And now some for some math examples.  The |mathexamples| environment is defined
+to share a counter with |examples|, so the example numbers continue.  Note
+there's no dollar signs around them, courtesy of |\fancyitem|.
+
+
+\begin{tcblisting}{example}
+  \newexamples{mathexamples}{examples}{4}{}                     % in the preamble
+  \newcommand\MathItem{\AtEndItem{$}\PlainItem$}             
+  \FancyItem{mathexamples}{\MathItem}
+  \begin{mathexamples}                                          % in the document
+  \item \forall x\forall y\colon (Fx\wedge Dy\wedge Oxy)\Rightarrow Bxy
+  \item \forall x\colon (Fx\wedge \exists y\colon Dy\wedge Oxy)\Rightarrow \exists y\colon Dy\wedge Bxy
+  \end{mathexamples}
+\end{tcblisting}
+
+\end{document}
+
+%%% Local Variables:
+%%% mode: latex
+%%% TeX-master: t
+%%% End:
